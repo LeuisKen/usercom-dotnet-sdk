@@ -98,6 +98,7 @@ namespace UserCom.Model.Users.Requests
         public string? VerifiedMember { get; set; }
 
         [JsonProperty("Latest Member Login")]
+        [JsonConverter(typeof(DateOnlyConverter))]
         public DateTime? LatestMemberLogin { get; set; }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UserCom;
 using UserCom.Model.Users.Requests;
+using UserCom.Serialization;
 
 namespace Tests.UserCom.Serialization;
 
@@ -22,7 +24,7 @@ public class UpdateOrCreateUserRequestSerializationTests
         var json = JObject.Parse(serialized);
 
         Assert.That(json.ContainsKey(VerifiedMemberPropertyName), Is.True);
-        Assert.That((string?)json[VerifiedMemberPropertyName], Is.EqualTo(expectedVerifiedMemberValue));
+        Assert.That((string)json[VerifiedMemberPropertyName], Is.EqualTo(expectedVerifiedMemberValue));
     }
 
     [Test, CustomAutoData]
@@ -34,26 +36,25 @@ public class UpdateOrCreateUserRequestSerializationTests
     }
 
     [Test, CustomAutoData]
-    public void LatestMemberLogin_serializes_using_expected_property_name(DateTime expectedLatestMemberLogin)
+    public void LatestMemberLogin_serializes_as_date_only(DateTime expectedLatestMemberLogin)
     {
-        expectedLatestMemberLogin = expectedLatestMemberLogin.ToUniversalTime();
         var request = new UpdateOrCreateUserRequest { LatestMemberLogin = expectedLatestMemberLogin };
 
         var serialized = JsonConvert.SerializeObject(request, UserComClient.SerializerSettings);
         var json = JObject.Parse(serialized);
 
         Assert.That(json.ContainsKey(LatestMemberLoginPropertyName), Is.True);
-        var serializedValue = json[LatestMemberLoginPropertyName]?.ToObject<DateTime>();
-        Assert.That(serializedValue, Is.EqualTo(expectedLatestMemberLogin));
+        var serializedValue = (string)json[LatestMemberLoginPropertyName];
+        Assert.That(serializedValue, Is.EqualTo(expectedLatestMemberLogin.ToString(DateOnlyConverter.Format, CultureInfo.InvariantCulture)));
     }
 
     [Test, CustomAutoData]
     public void LatestMemberLogin_deserializes_using_expected_property_name(DateTime expectedLatestMemberLogin)
     {
-        expectedLatestMemberLogin = expectedLatestMemberLogin.ToUniversalTime();
-        var json = $"{{\"{LatestMemberLoginPropertyName}\":\"{expectedLatestMemberLogin:O}\"}}";
+        var dateOnlyStr = expectedLatestMemberLogin.ToString(DateOnlyConverter.Format, CultureInfo.InvariantCulture);
+        var json = $"{{\"{LatestMemberLoginPropertyName}\":\"{dateOnlyStr}\"}}";
         var deserialized = JsonConvert.DeserializeObject<UpdateOrCreateUserRequest>(json, UserComClient.SerializerSettings);
-        Assert.That(deserialized?.LatestMemberLogin, Is.EqualTo(expectedLatestMemberLogin));
+        Assert.That(deserialized?.LatestMemberLogin, Is.EqualTo(expectedLatestMemberLogin.Date));
     }
 
     [TestFixture]
